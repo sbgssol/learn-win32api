@@ -1,6 +1,9 @@
 #include <windows.h>
 #include <atlstr.h>
 #include <iostream>
+#include <vector>
+#include <strsafe.h>
+#include <map>
 
 HKEY OpenRegistryKey(HKEY hRootKey, LPCTSTR subKey, REGSAM access = KEY_READ)
 {
@@ -87,40 +90,77 @@ bool WriteDWORDValue(HKEY hRootKey, LPCTSTR subKey, LPCTSTR valueName, DWORD val
     return (result == ERROR_SUCCESS);
 }
 
+struct RegistryValueInfo
+{
+    CString name;
+    DWORD type;
+};
+
+bool GetRegistryValues(HKEY hRootKey, LPCTSTR subKey, std::vector<RegistryValueInfo>& values)
+{
+    HKEY hKey = OpenRegistryKey(hRootKey, subKey, KEY_READ);
+    if (!hKey) return false;
+
+    DWORD index = 0;
+    TCHAR valueName[256];
+    DWORD valueNameSize;
+    DWORD type;
+    LONG result;
+
+    values.clear();
+
+    while (true)
+    {
+        valueNameSize = _countof(valueName);
+        result = RegEnumValue(hKey, index, valueName, &valueNameSize, nullptr, &type, nullptr, nullptr);
+        if (result == ERROR_NO_MORE_ITEMS) break;
+        if (result != ERROR_SUCCESS)
+        {
+            RegCloseKey(hKey);
+            return false;
+        }
+
+        values.push_back({valueName, type});
+        index++;
+    }
+
+    RegCloseKey(hKey);
+    return true;
+}
+
+bool GetRegistrySubkeys(HKEY hRootKey, LPCWSTR subKey, std::vector<CString>& subkeys)
+{
+    HKEY hKey = OpenRegistryKey(hRootKey, subKey, KEY_READ);
+    if (!hKey) return false;
+
+    DWORD index = 0;
+    TCHAR subKeyName[256];
+    DWORD subKeyNameSize;
+    LONG result;
+
+    subkeys.clear();
+
+    while (true)
+    {
+        subKeyNameSize = _countof(subKeyName);
+        result = RegEnumKeyEx(hKey, index, subKeyName, &subKeyNameSize, nullptr, nullptr, nullptr, nullptr);
+        if (result == ERROR_NO_MORE_ITEMS) break;
+        if (result != ERROR_SUCCESS)
+        {
+            RegCloseKey(hKey);
+            return false;
+        }
+
+        subkeys.push_back(subKeyName);
+        index++;
+    }
+
+    RegCloseKey(hKey);
+    return true;
+}
+
 int main()
 {
-    HKEY hRootKey = HKEY_CURRENT_USER;
-    LPCTSTR subKey = _T("Software\\MyApp\\Colors");
-    CString value;
-
-    if (RegistryKeyExists(hRootKey, subKey))
-    {
-        subKey = _T("Software\\MyApp\\Colors");
-        if (ReadStringValue(hRootKey, subKey, _T("BackgroundBookmarked"), value))
-        {
-            std::wcout << value.GetString() << std::endl;
-        }
-    }
-    /*
-    if (ReadStringValue(hRootKey, subKey, _T("Hello"), value))
-    {
-        std::wcout << value.GetString() << std::endl;
-    }
-
-    DWORD dwValue;
-    if (ReadDWORDValue(hRootKey, subKey, _T("Number"), dwValue))
-    {
-        std::wcout << dwValue << std::endl;
-    }
-
-    if (WriteStringValue(hRootKey, subKey, _T("Test"), _T("Hello, World!")))
-    {
-        std::wcout << _T("Value written successfully") << std::endl;
-    }
-
-    if (WriteDWORDValue(hRootKey, subKey, _T("TestDWORD"), 1234))
-    {
-        std::wcout << _T("DWORD value written successfully") << std::endl;
-    }*/
+    
     return 0;
 }
