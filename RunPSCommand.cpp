@@ -27,7 +27,9 @@ std::string ExecuteCommand(const std::string& command, int timeout)
 
     std::string escapedCommand = EscapeCommandForPowerShell(command);
     std::string cmdLineStr = "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"" + escapedCommand + "\"";
-    char* cmdLine = _strdup(cmdLineStr.c_str());
+    
+    std::vector<char> cmdLine(cmdLineStr.begin(), cmdLineStr.end());
+    cmdLine.push_back('\0'); // Ensure null-termination
 
     STARTUPINFOA si = {};
     si.cb = sizeof(si);
@@ -37,9 +39,8 @@ std::string ExecuteCommand(const std::string& command, int timeout)
     si.hStdInput = NULL;
 
     PROCESS_INFORMATION pi = {};
-    BOOL success = CreateProcessA(NULL, cmdLine, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
+    BOOL success = CreateProcessA(NULL, cmdLine.data(), NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
 
-    free(cmdLine);
     CloseHandle(hWrite);
 
     if (!success)
@@ -142,7 +143,8 @@ int main()
         R"(Write-Output "PowerShell says: `"Quoted Text`"")",
         R"(Start-Sleep -Seconds 4; Write-Output 'Done')",
         R"(Write-Output 'Unclosed string)",
-        R"(Get-Item 'Z:\NoSuchPath')"
+        R"(Get-Item 'Z:\NoSuchPath')",
+        R"(Get-WmiObject -query "SELECT * FROM Win32_Product")"
     };
 
     std::string result = RunMultipleCommands(commands, 3000, 8000);
