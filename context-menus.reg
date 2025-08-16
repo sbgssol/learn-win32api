@@ -1,0 +1,50 @@
+Windows Registry Editor Version 5.00
+
+; To add a context menu item to the desktop and folders
+; To extract icon from a DLL, use the format "dllname.dll,index"
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Hello]
+"Icon"="various-icons.dll,1"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Hello\command]
+@="notepad.exe"
+
+; To make it visible only when Shift is pressed, add "Extended" value
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Advanced Hello]
+"Extended"=""
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Advanced Hello\command]
+@="calc.exe"
+
+; To add a context menu item to folders
+[HKEY_CLASSES_ROOT\Directory\shell\Echo folder name]
+@="Echo folder name"
+
+; To pass the folder name to the command, use %1
+[HKEY_CLASSES_ROOT\Directory\shell\Echo folder name\command]
+@="cmd.exe /k echo %1"
+
+[HKEY_CLASSES_ROOT\Directory\shell\Open it]
+"Extended"=""
+
+[HKEY_CLASSES_ROOT\Directory\shell\Open it\command]
+@="explorer.exe %1"
+
+; To add a context menu item to files
+[HKEY_CLASSES_ROOT\*\shell\Echo file name]
+@="Echo file name"
+"Icon"="cmd.exe"
+
+[HKEY_CLASSES_ROOT\*\shell\Echo file name\command]
+@="cmd.exe /k echo %1"
+
+; To add a context menu item to the background of folders
+[HKEY_CLASSES_ROOT\Directory\Background\shell\Echo folder name]
+@="Echo folder name"
+"Icon"="cmd.exe"
+
+; To pass the folder name to the command, use %V
+[HKEY_CLASSES_ROOT\Directory\Background\shell\Echo folder name\command]
+@="cmd.exe /k echo %V"
+
+; %1 is the most common parameter and is used to pass the full path of the item you right-clicked on
+; %V is used for the background of folders to pass the folder path
